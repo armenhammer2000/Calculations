@@ -1,0 +1,252 @@
+\documentclass[10pt]{article}
+
+% Packages
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+
+\usepackage{color} 
+	\definecolor{rltred}{rgb}{1,0,0}
+	\definecolor{rltgreen}{rgb}{0,1,0}
+	\definecolor{rltblue}{rgb}{0,0,1}
+	
+\usepackage[
+	colorlinks=true,
+        	urlcolor=rltgreen,     % \href{...}{...} external (URL)
+        	filecolor=rltgreen,    % \href{...} local file
+        	citecolor=rltblue,
+        	linkcolor=rltred,        % \ref{...} and \pageref{...}
+	pdftitle={The Lost Sock Problm},
+	pdfauthor={MAA},
+	pdfcreator={},
+	pagebackref=true,
+	pdfproducer={}
+	breaklinks=true]{hyperref}
+\usepackage{graphicx,subfig,amssymb,amsthm,amsmath,bbm,hypcap}
+
+% New Commands
+\newcommand{\lprp}[1]{\left(#1\right)}
+\newcommand{\lbrb}[1]{\left[#1\right]}
+\newcommand{\lcrc}[1]{\left\{#1\right\}}
+\newcommand{\eq}[1]{\begin{equation}#1\end{equation}}
+\newcommand{\eqs}[1]{\begin{equation}\begin{split}#1\end{split}\end{equation}}
+\newcommand{\expect}[1]{\left\langle#1\right\rangle}
+\newcommand{\mat}[1]{\begin{matrix}#1\end{matrix}}
+
+\begin{document}
+\title{The Lost Sock Problem}
+\author{}
+\date{}
+\maketitle
+\section{Introduction}
+How quickly do we run out of pairs of socks if all socks are the same? How quickly do we run out of pairs of socks if we have two types of socks (\textit{e.g.}, left and right)? Let's find out!
+\section{The homogeneous problem: one type of sock}\label{sec:OneType}
+When there is only one type of sock, the problem is very straightforward. We assume that socks are identical and that each sock is lost at the same constant rate, independent of the total sock number. We begin with $N$ socks and after a time $T$ there is a probability $p$ for each sock to be be lost. This problem is exactly a Bernoulli process, and the probability of still having $k$ socks, $S$, after this time period is\footnote{I know, I know, I stray from the conventional form of the binomial distribution because I want to think of $p$ as a loss rate, but $k$ as the number of socks remaining. Sorry.}%
+\eq{\label{eq:socksPDFSimple}
+P(S=k) = \lprp{\mat{N\\k}} (1-p)^{k} p^{N-k} \ ,
+}
+The average number of remaining socks is then
+\eqs{
+\expect{N}_{p} &= \sum_{k=0}^{N} k\cdot P(S=k)\\
+&= N (1-p) \ .
+}
+Therefore the change in average sock number is
+\eq{\label{eq:SockLossDifferential}
+\expect{N}_{p}-\expect{N}_{0}=\delta \expect{N}_{p} = -p \expect{N} . 
+}
+Now, if the socks are lost at a constant rate, $\lambda$, such that $p = \lambda T$, and if we take the infinitesimal time limit $T\rightarrow d t$ we then have
+\eq{
+\frac{d\expect{N}}{dt}=-\lambda\expect{N} \ , 
+}
+so that the number of socks in time is then
+\eq{
+\expect{N}_{t} = N_{0} e^{-\lambda t} \ ,
+}
+where $N_{0}=\expect{N}_{0}$. And so the average number of sock pairs is simply
+\eq{
+\expect{P}_{t} = \frac{N_{0}}{2}e^{-\lambda t} \ ,
+}
+and the rate of sock pair loss is equal to $\lambda$, the same as the individual socks, 
+\subsection{...adding a bit more accuracy}
+Okay, but as it turns out, this level of analysis is a little too crude for a direct comparison to the two-type sock case. The problem is that the stochastic variable, $P$, for number of socks pairs is actually
+\eq{
+P = \mathrm{floor}\lprp{N/2} 
+}
+where $N$ is the number of remaining socks. This subtle distinction is important for making the numerical comparisons between the one sock type and two sock type problems (to follow). In this case, the expected number of pairs can be computed from
+\eq{
+\expect{P}_{p} = \sum_{k=0}^{N}\mathrm{floor}(k/2) \lprp{\mat{N\\k}} (1-p)^{k} p^{N-k} \ .
+}
+
+More importantly, PDF for the number of sock pairs is not simply the PDF for individual socks~\ref{eq:socksPDFSimple}, since it matters whether there are an even or odd number of pairs. For example, imagine we have 20 total socks, and 10 pairs. We can lose \textit{either one or two} socks, and still end up with 9 pairs. We can lose one or two more socks, and either case leads to 8 pairs. And so forth. Anyways, assuming we have $N$ total socks, the correct PDF for sock pairs is
+\eq{\label{eq:pairsPDF}
+P(P=k) = \lprp{\mat{N\\2k}} (1-p)^{2k} p^{N-2k} + \lprp{\mat{N\\2k+1}} (1-p)^{2k+1} p^{N-2k-1} \ ,
+}
+where $0\leq k\leq N/2$. Using the correct PDF, the expectation for pairs is
+\eq{
+\expect{P}_{p} = \sum_{k=0}^{N/2} k \cdot P(P=k)\ .
+}
+Now, we could follow the arguments of the previous section to find a differential equations for this expectation, but since we no longer have the sweet, sweet analytic results it hardly seems to matter.
+\section{The inhomogeneous problem: two types of socks}
+When there are two types of socks, right and left, things get a little more complicated. Basically, at any time the total number of sock pairs is given by
+\eq{
+P = \min\lprp{R,L}
+}
+where $R$ and $L$ are the random variables for the number of right and left handed socks. Now, these random variables are again described by the Bernoulli process so that the individual expectations for these quantities follow
+\eq{
+\expect{R}_{t} = \expect{L}_{t} = \frac{N_{0}}{2}e^{-\lambda t} \ ,
+}
+but the expected number of pairs is not simply the expectation of this quantity
+\eq{
+\expect{P}_{t} \neq \min\lprp{\expect{R}_{t},\expect{L}_{t}} \neq \frac{N_{0}}{2}e^{-\lambda t} \ ,
+}
+since $\min$ is a nonlinear operator. \textbf{It would be absurd} to even presume that these two quantities were the same. From an intuitive standpoint, we expect that the average decay rate will be increased \textit{somewhat} in this inhomogeneous case, so the above result can't be exactly right.
+
+To deal with this situation we need to start from the cumulative distribution function (CDF)
+\eq{
+F_{S}(M) =P(S \leq M) = \sum_{k=0}^{M} P(S=k)
+}
+which is the probability that the total number of existing socks in the next time step is less than $M$. We need the property of CDFs that the product of the CDF of two (independent) random variables is exactly the CDF of the maximum of the two variables\footnote{As we all learned in kindergarten, thanks Dmitri! Also, \textbf{go to hell Berglund!}}. So, we have
+\eq{
+P(\textrm{max}(X,Y)\leq M) = P(X\leq M) P(Y\leq M) \ .
+}
+Good! We'll use that soon.
+
+Ultimately, what we want is the CDF for a minimum of two random variables. The CDF for the minimum follows the same rules as all CDFs, so 
+\eq{
+P(\textrm{min}(X,Y)\leq M) = 1 - P(\textrm{min}(X,Y)> M) \ .
+}
+The complementary CDF on the RHS is easier (for me) to parse, and we have
+\eqs{
+P(\textrm{min}(X,Y)> M) &\equiv P(X>M , Y>M) \\
+& = 1 - P\lprp{ (X\leq M) \ \vee \ (Y\leq M) }\\
+&= 1 - \lcrc{P(X\leq M) + P(Y \leq M) - P(X\leq M, Y\leq M)} \ .
+}
+The last term on the RHS can be expressed as a product of the individual CDFs using the product rule described above, because
+\eqs{
+P(X\leq M, Y\leq M) &\equiv P(\textrm{max}(X,Y)\leq M) \\
+&= P(X\leq M) P(Y\leq M)  \ .
+}
+Putting this all together we have
+\eq{\label{eq:minCDF}
+\boxed{P(\textrm{min}(X,Y)\leq M) =  P(X\leq M) + P(Y \leq M) - P(X\leq M) P(Y\leq M) } \ .
+}
+Boom, baby\footnote{Note to future self: even before using the trick about the product of CDFs I guessed that the CDF for the min would follow
+\eq{
+P(\mathrm{min}(X,Y)\leq M) = P(X\leq M) P(Y> M) + P(Y\leq M) P(X>M)  +  P(X\leq M) P(Y\leq M) 
+}
+Which is just a sum of terms that felt right. This turns out to be exactly the same thing as~\ref{eq:minCDF}. I know of no formal reason why this should work, but it does, so it might be worth thinking about.
+}. %
+Anyways, I think this final result is correct, and we'll see below that it makes very reasonable predictions. 
+
+Now, the CDF for individual socks is obviously identical for right and left handed socks, and we have explicitly
+\eqs{
+P(R\leq M) = P(L\leq M) &= \sum_{k=0}^{M}\lprp{\mat{N\\k}} (1-p)^{k} p^{N-k} \\
+& = P(S\leq M) \ .
+} 
+Substituting this into the CDF for sock pairs~\ref{eq:minCDF}, we get
+\eqs{
+P(P\leq M)  = 2 P(S \leq M) - P(S \leq M)^{2} \ .
+}
+For this discrete random variable, the PDF can be computed from
+\eqs{
+P(P=M) &= P(P\leq M) - P(P\leq M-1)\\
+& = 2 \lbrb{P(S \leq M) -P(S \leq M-1)} -\lbrb{P(S \leq M)^{2} - P(S \leq M-1)^{2}} \\
+& = 2 P(S=M) - P(S=M)\cdot\lbrb{P(S \leq M)+ P(S \leq M-1)} \\
+& = 2 P(S=M) \lbrb{1- P(S \leq M)} + P(S=M)^{2} \ ,
+}
+where the individual PDFs are just
+\eq{
+P(S=M) = \lprp{\mat{N\\M}} (1-p)^{M} p^{N-M} \ .
+}
+So that the PDF for pairs, expressed in terms of the underlying sock distributions is
+\eq{\label{eq:pairsPDFhanded}
+\boxed{P(P=M) \ =\ 2 P(S=M)\ \lbrb{1- P(S \leq M)} + P(S=M)^{2}}\ .
+}
+
+Using all this, it's straightforward to compute the expected number of sock pairs at the next time step. Noting that for the two-type socks problem the summation for the individual PDF/CDF only goes to $N/2$, we have the expectation
+\eqs{
+\expect{P}_{p} &= \sum_{M=0}^{N/2}M\cdot 2\lbrb{\lprp{\mat{N/2\\M}} (1-p)^{M} p^{N/2-M}} \lbrb{1-\sum_{k=0}^{M}\lprp{\mat{N/2\\k}} (1-p)^{k} p^{N/2-k}} \\
+&\qquad+\sum_{M=0}^{N/2}M\lbrb{\lprp{\mat{N/2\\M}} (1-p)^{M} p^{N/2-M}}^{2} \\
+& = N(1-p) - \sum_{M=0}^{N/2}\lcrc{2M{\lprp{\mat{N/2\\M}} (1-p)^{M} p^{N/2-M}} \cdot {\sum_{k=0}^{M}\lprp{\mat{N/2\\k}} (1-p)^{k} p^{N/2-k}}} \ .
+}
+Now, it should be easy enough to compute this mean numerically, but with a little help from Mathematica I can probably extract some analytic result... no, can't be done. So we move on to numerical comparisons.
+\section{Numerical Results}
+\subsection{Distributions}
+Okay, let's compare some properties of the two processes. In figure~\ref{fig:PDF_CDF_1} we plot the resulting PDF and CDF for sock pairs for the two cases we have studied. Just to be explicitly clear, we are plotting the probability distributions (and associated CDFs) given in~\ref{eq:pairsPDF} and~\ref{eq:pairsPDFhanded}. In both cases, we take $p=0.5$ and the initial number of socks as $N=1000$, so that $(R,L)=500$ in the inhomogenous case. The PDFs are plotted over a zoomed in scale to highlight the difference between them; we can see from the CDFs, plotted over the full range of pairs, that this difference is not huge. Still, the inhomogenous case results in a smaller mean and median than the homogeneous case -- having ``handed'' socks does lead to a faster rate of lost sock pairs, as we would expect. Also, the inhomogenous process has a larger variance than the homogenous process, consistent with the increase of potential sock configurations. Finally, notice that even for the homogenous case the mean and median are not equal (as they are for a standard binomial distribution) and they differ due to averaging nearest neighbor probabilities in~\ref{eq:pairsPDF}; however, the effect is small for large $N$.% 
+\begin{figure}[!t]
+\capstart
+\centering
+\includegraphics[width=1\textwidth]{figures/PDF_CDF_Example_1}
+\caption[]{\label{fig:PDF_CDF_1} Probability distribution for the sock pairs, when the initial number of socks is $N=1000$, and $p=0.5$. The mean and median of the resulting distributions are: $\lprp{249.75, 250}$ for the homogenous case, and $\lprp{243.70,244}$ for the inhomogeneous case.}
+\end{figure}
+
+In figure~\ref{fig:PDF_CDF_2} we have the same plots but for the case where $p=0.1$. Now the difference between the two cases is even smaller, as can be seen in the CDFs. Note that the we've chosen the range of the x-axis to better highlight the disparity in the PDFs (it's more zoomed in than figure~\ref{fig:PDF_CDF_1}). 
+\begin{figure}[!t]
+\capstart
+\centering
+\includegraphics[width=1\textwidth]{figures/PDF_CDF_Example_2}
+\caption[Short caption.]{\label{fig:PDF_CDF_2} Probability distribution for the sock pairs, when the initial number of socks is $N=1000$, and $p=0.1$. The mean and median of the resulting distributions are: $\lprp{449.75, 450}$ for the homogenous case, and $\lprp{446.22,446}$ for the inhomogeneous case.}
+\end{figure}
+\subsection{Effective ``decay'' rate}
+I'm not sure that any of this analysis is particularly insightful, but I'll leave it in for now...
+
+As we take $p\rightarrow 0$, the two distributions approach each other, of course. But we can look at the fractional change between the two cases to infer how the rate of ``sock pair loss'' changes between the two scenarios. The approach I take is heuristic, fashioned after the line of reasoning in section~\ref{sec:OneType}. In particular, assuming a probability $p$ of sock loss, we look at the change in the mean number of sock pairs, $\delta \expect{P}_{p} = \expect{P}_{p} - \expect{P}_{0}$, and \textit{assume} it follows the differential form similar to~\ref{eq:SockLossDifferential}, but with a modified ``rate''
+\eq{
+\delta \expect{P}_{p} = -p \cdot g(p,N) \expect{P}_{0}\ .
+} 
+Since $\expect{P}_{0} = N/2$, we have
+\eq{
+g(p,N) = -\frac{\expect{P}_{p} - N/2}{p N/2} \ .
+}
+While this feels like a somewhat clumsy metric, it does (at the least) provide an efficient way of comparing the two cases graphically. Furthermore, we know that a true Bernoulli process should have $g(p,N) = 1$, and any differences of the effective rate modifier from unity should tell us something... maybe. We'll see that this metric leads to some counter-intuitive insights, but I'm not sure that it provides any deeper understand of the problem.
+\begin{figure}[!h]\capstart
+\centering
+\subfloat[][]{\label{fig:EffectiveRate1000}
+\includegraphics[width=.7\textwidth]{figures/EffectiveRate1000}
+}
+\vfill%
+\subfloat[][]{\label{fig:EffectiveRate100}
+\includegraphics[width=.7\textwidth]{figures/EffectiveRate100}
+}
+\vfill%
+\subfloat[][]{\label{fig:EffectiveRate10}
+\includegraphics[width=.7\textwidth]{figures/EffectiveRate10}
+}
+\caption[]{\label{fig:EffectiveRate} Plot of the effective rate modifiers $g(p,N)$ versus $p$, for $N=$1000, 100, and 10. Note that in each case the x-axis range is $\lcrc{\frac{10^{-3}}{N}\leq p\leq 1}$.}
+\end{figure}
+
+We plot results for $g(p)$ in figure~\ref{fig:EffectiveRate}, for the case where $N=$1000, 100, and 10. 
+Note that the range of $p$ on the x-axis is chosen in each case such that $p = \lbrb{\frac{10^{-3}}{N},1}$. Therefore, the left end of each plot indicates the situation where it is very unlikely to lose any socks at all. The rate modifier is 2 in this case, because losing one sock means losing one pair, and since there are half as many pairs as there are socks the effective rate of of pair loss must be twice that of sock loss. Still, if we had begun with an odd number of total socks, the rate modifier would be zero in this case! Therefore, the average of these two cases would provide us with what we expect from intuition.
+
+As $p\rightarrow 1$, and the number of lost socks accumulate, the rate modifier approaches unity in both cases -- but it does so more slowly for the inhomogeneous case. Again, this all makes sense: in the limit of many lost socks, the rate of pair loss should follow the rate of sock loss, as any modifications due to even/odd numbers of socks or disparity between the number of right/left socks tend to average out.
+
+Finally, note that the disparity between the homogeneous and inhomogeneous cases is largest when $p N\approx 2$: it's only after the first lost sock that things get interesting. It doesn't matter if we lose just one right or just one left sock, what matters is whether the next lost sock is \textit{also} right or \textit{also} left. This difference is eventually averaged away as large numbers of both right and left socks are lost, but the convergence back towards the homogenous case is quite slow...
+\subsection{Simulations and decay rate fits}
+In this section, we include some results from stochastic simulations of the Bernoulli process~\ref{eq:socksPDFSimple} for sock loss. Starting from $N$ socks, we generate the time vector $S_{t}$, for the random process by sampling the waiting time distribution for an underlying Bernoulli/Poisson process with loss rate $\lambda$ for each sock. For the case of handed socks, we generate the random processes $R_{t}$ and $L_{t}$, and from these we can infer the number of pairs $P_{t}$ in either the homogenous or inhomogeneous case. We then repeat this process many times to obtain a smooth approximation to the expectations $\expect{S_{t}}$ and $\expect{P_{t}}$. Since this problem is a jump process, we know that $S_{t} = [N, (N-1), ... ,1, 0]$, and what is actually being estimated is the average time $t_{n}$, for each of the $N$ jumps in the sequence. 
+
+\begin{figure}[!t]
+\capstart
+\centering
+\includegraphics[width=1\textwidth]{figures/SimulationN=100}
+\caption[]{\label{fig:SimulationN=100} Simulation results for $N=100$ initial socks, and a decay rate of $\lambda=1\ s^{-1}$. Upper plot: average results for total socks (black dots), homogenous sock pairs (blue dots), and inhomogeneous sock pairs (red dots). The black line is the expected result $\expect{N}_{t}=N\exp{(-\lambda t)}$ for total socks, and the purple line is $\expect{P}_{t}=(N/2)\exp{(-\lambda t)}$. Lower plot: the difference between the average simulated process and either $\expect{N}_{t}$ or $\expect{P}_{t}$.}
+\end{figure}
+Results for  $N=100$ initial socks are presented in figure~\ref{fig:SimulationN=100}, with the y-axis on a log scale. These  results were obtained by averaging $10^{5}$ sock trajectories. The black dots show the average for the total socks, $\expect{S_{t}}$, and the black line is the exact solution, $\expect{S}_{t} = N\exp{(-\lambda t)}$, for this case. Note that there is an excellent agreement between the simulation results and the exact solution, as indicated by the residual, $\expect{S_{t}} - \expect{S}_{t}$, included in the plot below (in black, hovering about the value 0). The results for homogenous (blue) and inhomogeneous (red) sock pairs \textit{approximately} follow the naive guess for the averaged pairs process, $\expect{P}_{t} = (N/2)\exp{(-\lambda t)}$, plotted as a solid purple line. For visual reference, we also plot the decay curve $(N/2)\exp{(-2\lambda t)} $ as a dash-dotted purple line; thus, the average decay rate for sock pairs is quite close to that of the original socks, and there is certainly no factor of 2 enhancement in decay rate for the process\footnote{Except at the very end! As discussed in the previous section, when we get down to one remaining sock pair, the effective decay rate is doubled; however, this behavior can't be seen here because the $P=0$ datapoint can't be included on the log-scale.}. 
+
+In the lower plot we display the residuals between the averaged pairs processes, $\expect{P_{t}}_{H,I}$, and the best guess exponential decay at rate $\lambda$. For the homogeneous process the residual appears to be constant, with a value of $-0.5$; this ``missing'' half pair is due exactly to the problem that losing the first sock kills an entire pair, so that there is a one-time, permanent shift in the average curve. Note that the apparent ``bending away'' of the blue data points from the purple line in the upper plot is entirely due to this 1/2 sock pair offset. In contrast, the inhomogeneous process has more interesting behavior and there does appears to be a larger average rate of decay in this case. 
+
+To get some closure on this sordid affair, we repeat simulations for the pair loss process, as in~\ref{fig:SimulationN=100}, but with different initial sock values, ranging from $N = \lbrb{4,100}$. We then take the resulting decay curves for the pairs and fit the functional form
+\eq{
+X_{t} = \frac{N}{2} e^{\lambda_{f}t} - \frac{1}{2} \ ,
+} 
+to obtain a best estimate, $\lambda_{f}$ for the average process decay. The results of this procedure are plotted in figure~\ref{fig:DecayRateFit}, with the y-axis value showing the ratio $\lambda_{f}/\lambda$. Here,  data points represent the best fit, and the shaded regions show the 95$\%$ confidence intervals. We see that the fits for the homogeneous case are exactly as expected, with a rate $\lambda_{f} = \lambda$\footnote{%
+Similarly, fits for the sock loss process are displayed and show excellent agreement with the theory. In this case the functional form of the fit was $N\exp{(-\lambda_{f}t)}$.
+}. %
+For inhomogeneous socks, the pair decay is clearly larger for this range of $N$. Note that the fit value does approach $\lambda_{f}\rightarrow\lambda$ for very large $N$, but it convergences... quite... slowly... 
+\begin{figure}[!t]
+\capstart
+\centering
+\includegraphics[width=1\textwidth]{figures/DecayRateFit}
+\caption[]{\label{fig:DecayRateFit} Best fit decay rates for the three processes: socks, homogeneous pairs, and inhomogeneous pairs. The shaded regions indicate 95$\%$ confidence intervals. Note that the fit for the socks and homogeneous pairs lie on top of each other, although the confidence interval for total socks remains much more tight about the best fit.}
+\end{figure}
+
+Therefore, from the perspective of the average consumer who might deal with $\sim$100 sock pairs over a life-time, we see that the average rate of pair loss is, in fact, slightly higher when wearing inhomogeneous socks. This is a bit strange when you consider that the average rate of pair loss as $N\rightarrow\infty$ is exactly $\lambda$, the rate of sock loss. The problem is that the average consumer gets shafted by dealing with small numbers statistics -- if all the sock consumers in the world got together at some sock convention and pooled their socks together, they would create new sock pairs from their stranded socks, and thereby reduce the apparent decay rate back towards $\lambda$. But since most sock consumers die alone and unloved, any stray socks left behind are typically tossed into the garbage, like so may lost years...
+\end{document}
